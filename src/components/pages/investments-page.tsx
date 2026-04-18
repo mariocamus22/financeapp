@@ -11,6 +11,7 @@ import {
   totalsForPeriod,
 } from "@/lib/finance/aggregates";
 import { formatEuroFromCents } from "@/lib/finance/format";
+import { monthShortLabelEs } from "@/lib/finance/month-names";
 import { roiAbsoluteCents, roiRatio } from "@/lib/finance/performance";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
@@ -65,7 +66,7 @@ export function InvestmentsPage() {
         );
         const real = slice.reduce((s, tx) => s + tx.amountCents, 0);
         return {
-          m: String(m),
+          mes: monthShortLabelEs(m),
           real,
           target: a.monthlyTargetCents,
         };
@@ -89,7 +90,7 @@ export function InvestmentsPage() {
     const lineTotal = Array.from({ length: 12 }, (_, i) => {
       const m = i + 1;
       const inv = totalsForPeriod(data.transactions, year, m).investmentCents;
-      return { m: String(m), invertido: inv };
+      return { mes: monthShortLabelEs(m), invertido: inv };
     });
     return { rows, totalCap, totalVal, donut, lineTotal };
   }, [data, year]);
@@ -181,7 +182,7 @@ export function InvestmentsPage() {
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={model.lineTotal}>
-                <XAxis dataKey="m" stroke="#64748b" />
+                <XAxis dataKey="mes" stroke="#64748b" />
                 <YAxis hide />
                 <Tooltip formatter={(v) => formatEuroFromCents(Number(v ?? 0))} />
                 <Line
@@ -266,7 +267,7 @@ export function InvestmentsPage() {
                     <div className="h-56 p-4">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={r.months}>
-                          <XAxis dataKey="m" stroke="#64748b" />
+                          <XAxis dataKey="mes" stroke="#64748b" />
                           <YAxis hide />
                           <Tooltip formatter={(v) => formatEuroFromCents(Number(v ?? 0))} />
                           <Legend />

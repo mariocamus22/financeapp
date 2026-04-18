@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { formatYearMonthLongEs } from "@/lib/finance/month-names";
 import { useMemo } from "react";
 
 export function MorePage() {
@@ -16,7 +17,7 @@ export function MorePage() {
       {
         href: `/resumen/mensual/${y}/${m}`,
         title: "Resumen mensual",
-        desc: "Extracto detallado del mes",
+        desc: `Extracto de ${formatYearMonthLongEs(y, m)}`,
       },
       { href: `/resumen/anual/${y}`, title: "Resumen anual", desc: "Vista macro del año" },
       { href: "/configuracion", title: "Configuración", desc: "Plataformas, categorías, JSON" },

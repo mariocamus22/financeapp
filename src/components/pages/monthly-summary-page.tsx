@@ -15,6 +15,7 @@ import {
   transactionsInPeriod,
 } from "@/lib/finance/aggregates";
 import { formatDateEs, formatEuroFromCents } from "@/lib/finance/format";
+import { formatYearMonthLongEs, monthNameEs } from "@/lib/finance/month-names";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
@@ -99,7 +100,7 @@ export function MonthlySummaryPage({
     <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Resumen {String(month).padStart(2, "0")}/{year}
+          Resumen {formatYearMonthLongEs(year, month)}
         </h1>
         <p className="text-sm text-muted-foreground">Extracto mensual</p>
       </header>
@@ -209,7 +210,7 @@ export function MonthlySummaryPage({
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `resumen-${year}-${month}.json`;
+            a.download = `resumen-${year}-${monthNameEs(month)}.json`;
             a.click();
             URL.revokeObjectURL(url);
             toast.success("Export JSON generado");

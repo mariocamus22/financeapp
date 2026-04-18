@@ -39,8 +39,8 @@ export function parseEuroInputToCents(input: string): number | null {
 export function formatDateEs(isoDate: string): string {
   const d = new Date(isoDate + "T12:00:00");
   return new Intl.DateTimeFormat("es-ES", {
-    day: "2-digit",
-    month: "2-digit",
+    day: "numeric",
+    month: "long",
     year: "numeric",
   }).format(d);
 }

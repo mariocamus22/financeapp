@@ -22,6 +22,7 @@ import {
   formatEuroFromCents,
   parseEuroInputToCents,
 } from "@/lib/finance/format";
+import { formatYearMonthLongEs, monthNameEs } from "@/lib/finance/month-names";
 import { useTransactionFiltersStore } from "@/store/transaction-filters-store";
 import { useTransactionSheetStore } from "@/store/transaction-sheet-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -147,6 +148,9 @@ export function TransactionsPage() {
       </Tabs>
 
       <Card className="space-y-3 border-border/80 bg-card/60 p-4">
+        <p className="text-xs font-medium text-muted-foreground capitalize">
+          Periodo: {formatYearMonthLongEs(year, month)}
+        </p>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <p className="mb-1 text-xs text-muted-foreground">Año</p>
@@ -159,14 +163,24 @@ export function TransactionsPage() {
           </div>
           <div>
             <p className="mb-1 text-xs text-muted-foreground">Mes</p>
-            <Input
-              type="number"
-              min={1}
-              max={12}
-              value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
-              className="rounded-xl"
-            />
+            <Select
+              value={String(month)}
+              onValueChange={(v) => setMonth(Number(v))}
+            >
+              <SelectTrigger className="rounded-xl capitalize">
+                <SelectValue placeholder="Mes" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const m = i + 1;
+                  return (
+                    <SelectItem key={m} value={String(m)} className="capitalize">
+                      {monthNameEs(m)}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="grid gap-2">

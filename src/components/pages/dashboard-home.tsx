@@ -14,6 +14,7 @@ import {
   totalLiquidityCents,
 } from "@/lib/finance/aggregates";
 import { formatEuroFromCents } from "@/lib/finance/format";
+import { formatYearMonthLongEs, monthShortLabelEs } from "@/lib/finance/month-names";
 import { roiAbsoluteCents, roiRatio } from "@/lib/finance/performance";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,7 +28,11 @@ import {
 import type { YearMonth } from "@/types/finance";
 
 function monthLabel(ym: YearMonth) {
-  return `${String(ym.month).padStart(2, "0")}/${String(ym.year).slice(2)}`;
+  return formatYearMonthLongEs(ym.year, ym.month);
+}
+
+function monthLabelShort(ym: YearMonth) {
+  return `${monthShortLabelEs(ym.month)} ${String(ym.year).slice(2)}`;
 }
 
 export function DashboardHome() {
@@ -92,7 +97,7 @@ export function DashboardHome() {
 
   const monthsAsc = [...lastNClosedMonths(anchor, 6)].reverse();
   const spark = monthsAsc.map((ym) => ({
-    label: monthLabel(ym),
+    label: monthLabelShort(ym),
     patrimonio: approxPatrimonioAtMonthEnd(
       transactions,
       platforms,

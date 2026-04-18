@@ -12,6 +12,7 @@ import {
   yearSavingsRunning,
 } from "@/lib/finance/aggregates";
 import { formatEuroFromCents } from "@/lib/finance/format";
+import { formatYearMonthLongEs, monthShortLabelEs } from "@/lib/finance/month-names";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -120,8 +121,8 @@ export function BudgetPage() {
         <Button variant="ghost" size="icon" onClick={() => shift(-1)} aria-label="Mes anterior">
           <ChevronLeft className="size-5" />
         </Button>
-        <p className="text-sm font-medium tabular-nums">
-          {String(month).padStart(2, "0")}/{year}
+        <p className="text-sm font-medium capitalize">
+          {formatYearMonthLongEs(year, month)}
         </p>
         <Button variant="ghost" size="icon" onClick={() => shift(1)} aria-label="Mes siguiente">
           <ChevronRight className="size-5" />
@@ -301,11 +302,14 @@ function AnnualMatrix({
           <thead>
             <tr className="text-left text-muted-foreground">
               <th className="sticky left-0 bg-card/95 px-2 py-2">Categoría</th>
-              {Array.from({ length: 12 }, (_, i) => (
-                <th key={i} className="px-1 py-2 text-right">
-                  {i + 1}
-                </th>
-              ))}
+              {Array.from({ length: 12 }, (_, i) => {
+                const m = i + 1;
+                return (
+                  <th key={m} className="px-1 py-2 text-right capitalize">
+                    {monthShortLabelEs(m)}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

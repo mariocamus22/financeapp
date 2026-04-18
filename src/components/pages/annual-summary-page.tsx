@@ -9,6 +9,7 @@ import {
   totalsForPeriod,
 } from "@/lib/finance/aggregates";
 import { formatEuroFromCents } from "@/lib/finance/format";
+import { monthNameEs, monthShortLabelEs } from "@/lib/finance/month-names";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
@@ -48,7 +49,7 @@ export function AnnualSummaryPage({ year }: { year: number }) {
       expenseY += t.expenseCents;
       invY += t.investmentCents;
       months.push({
-        m: String(m),
+        mes: monthShortLabelEs(m),
         ingresos: t.incomeCents,
         gastos: t.expenseCents,
         inversion: t.investmentCents,
@@ -85,7 +86,7 @@ export function AnnualSummaryPage({ year }: { year: number }) {
         data.settings,
         { year, month: m },
       );
-      return { m: String(m), patrimonio: pat };
+      return { mes: monthShortLabelEs(m), patrimonio: pat };
     });
 
     return {
@@ -147,7 +148,7 @@ export function AnnualSummaryPage({ year }: { year: number }) {
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={model.months}>
-              <XAxis dataKey="m" stroke="#64748b" />
+              <XAxis dataKey="mes" stroke="#64748b" />
               <YAxis hide />
               <Tooltip formatter={(v) => formatEuroFromCents(Number(v ?? 0))} />
               <Legend />
@@ -166,7 +167,7 @@ export function AnnualSummaryPage({ year }: { year: number }) {
         <CardContent className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={model.patSeries}>
-              <XAxis dataKey="m" stroke="#64748b" />
+              <XAxis dataKey="mes" stroke="#64748b" />
               <YAxis hide />
               <Tooltip formatter={(v) => formatEuroFromCents(Number(v ?? 0))} />
               <Area
@@ -194,15 +195,15 @@ export function AnnualSummaryPage({ year }: { year: number }) {
           </p>
           <p>
             Mes con mayor gasto:{" "}
-            <span className="font-medium text-foreground">
-              {String(model.maxMonth).padStart(2, "0")}
+            <span className="font-medium text-foreground capitalize">
+              {monthNameEs(model.maxMonth)}
             </span>{" "}
             ({formatEuroFromCents(model.maxSpend)})
           </p>
           <p>
             Mes con menor gasto:{" "}
-            <span className="font-medium text-foreground">
-              {String(model.minMonth).padStart(2, "0")}
+            <span className="font-medium text-foreground capitalize">
+              {monthNameEs(model.minMonth)}
             </span>{" "}
             ({formatEuroFromCents(model.minSpend)})
           </p>

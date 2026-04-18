@@ -5,6 +5,13 @@ import { DynamicIcon } from "@/components/icons/dynamic-icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetFooter,
@@ -14,6 +21,11 @@ import {
 import { getFinanceRepository } from "@/data";
 import { QK } from "@/lib/query-keys";
 import { parseEuroInputToCents } from "@/lib/finance/format";
+import {
+  firstDayOfMonthIso,
+  formatYearMonthLongEs,
+  monthNameEs,
+} from "@/lib/finance/month-names";
 import {
   assertCategoryMatchesType,
   normalizeTransactionRow,
@@ -26,12 +38,10 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-function todayIso() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+function yearOptions(anchorYear: number): number[] {
+  const from = Math.min(anchorYear - 6, new Date().getFullYear() - 10);
+  const to = Math.max(anchorYear + 3, new Date().getFullYear() + 2);
+  return Array.from({ length: to - from + 1 }, (_, i) => from + i);
 }
 
 function platformsFor(
@@ -56,6 +66,10 @@ function initialFormState(
   editId: string | null,
   defaultType: TransactionType,
 ) {
+  const now = new Date();
+  const defaultYear = now.getFullYear();
+  const defaultMonth = now.getMonth() + 1;
+
   if (mode === "edit" && editId) {
     const tx = data.transactions.find((t) => t.id === editId);
     if (tx) {
@@ -70,7 +84,8 @@ function initialFormState(
         : (cats[0]?.id ?? "");
       return {
         type,
-        date: tx.date,
+        txYear: tx.year,
+        txMonth: tx.month,
         amount: (tx.amountCents / 100).toFixed(2).replace(".", ","),
         description: tx.description,
         platformId,
@@ -87,7 +102,8 @@ function initialFormState(
   const cats = categoriesFor(type, data);
   return {
     type,
-    date: todayIso(),
+    txYear: defaultYear,
+    txMonth: defaultMonth,
     amount: "",
     description: "",
     platformId: pl[0]?.id ?? "",
@@ -112,26 +128,19 @@ function AddTransactionFormInner({
   onClose,
 }: FormInnerProps) {
   const qc = useQueryClient();
-  const [type, setType] = useState<TransactionType>(() =>
-    initialFormState(data, mode, editId, defaultType).type,
-  );
-  const [date, setDate] = useState(
-    () => initialFormState(data, mode, editId, defaultType).date,
-  );
-  const [amount, setAmount] = useState(
-    () => initialFormState(data, mode, editId, defaultType).amount,
-  );
-  const [description, setDescription] = useState(
-    () => initialFormState(data, mode, editId, defaultType).description,
-  );
-  const [platformId, setPlatformId] = useState(
-    () => initialFormState(data, mode, editId, defaultType).platformId,
-  );
-  const [categoryId, setCategoryId] = useState(
-    () => initialFormState(data, mode, editId, defaultType).categoryId,
-  );
-  const [unitPrice, setUnitPrice] = useState(
-    () => initialFormState(data, mode, editId, defaultType).unitPrice,
+  const init = initialFormState(data, mode, editId, defaultType);
+  const [type, setType] = useState<TransactionType>(() => init.type);
+  const [txYear, setTxYear] = useState(() => init.txYear);
+  const [txMonth, setTxMonth] = useState(() => init.txMonth);
+  const [amount, setAmount] = useState(() => init.amount);
+  const [description, setDescription] = useState(() => init.description);
+  const [platformId, setPlatformId] = useState(() => init.platformId);
+  const [categoryId, setCategoryId] = useState(() => init.categoryId);
+  const [unitPrice, setUnitPrice] = useState(() => init.unitPrice);
+
+  const years = useMemo(
+    () => yearOptions(Math.max(txYear, data.settings.currentYear)),
+    [txYear, data.settings.currentYear],
   );
 
   const buckets = useMemo(
@@ -179,11 +188,12 @@ function AddTransactionFormInner({
           : typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
             : `tx-${Date.now()}`;
+      const date = firstDayOfMonthIso(txYear, txMonth);
       const row = normalizeTransactionRow({
         id,
         date,
-        month: new Date(date + "T12:00:00").getMonth() + 1,
-        year: new Date(date + "T12:00:00").getFullYear(),
+        month: txMonth,
+        year: txYear,
         type,
         amountCents: cents,
         description: description.trim(),
@@ -234,26 +244,51 @@ function AddTransactionFormInner({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="tx-date">Fecha</Label>
-          <Input
-            id="tx-date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-xl"
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="tx-amount">Importe (€)</Label>
-          <Input
-            id="tx-amount"
-            inputMode="decimal"
-            placeholder="0,00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="rounded-xl text-lg tabular-nums"
-          />
+          <Label>Mes del movimiento</Label>
+          <p className="text-xs text-muted-foreground">
+            Se asigna al mes completo ({formatYearMonthLongEs(txYear, txMonth)}).
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1">
+              <span className="text-xs text-muted-foreground">Mes</span>
+              <Select
+                value={String(txMonth)}
+                onValueChange={(v) => setTxMonth(Number(v))}
+              >
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const m = i + 1;
+                    return (
+                      <SelectItem key={m} value={String(m)}>
+                        {monthNameEs(m)}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1">
+              <span className="text-xs text-muted-foreground">Año</span>
+              <Select
+                value={String(txYear)}
+                onValueChange={(v) => setTxYear(Number(v))}
+              >
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-2">
@@ -309,6 +344,21 @@ function AddTransactionFormInner({
               );
             })}
           </div>
+        </div>
+
+        <div className="rounded-2xl border-2 border-primary/35 bg-primary/8 p-4 shadow-sm ring-offset-background">
+          <Label htmlFor="tx-amount" className="text-base font-medium">
+            Importe (€)
+          </Label>
+          <Input
+            id="tx-amount"
+            inputMode="decimal"
+            placeholder="0,00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="mt-3 h-14 rounded-xl border-2 border-primary/25 bg-background/90 text-2xl font-semibold tabular-nums tracking-tight"
+            autoComplete="off"
+          />
         </div>
 
         {type === "INVESTMENT" && (

@@ -12,6 +12,7 @@ import {
   totalLiquidityCents,
 } from "@/lib/finance/aggregates";
 import { formatEuroFromCents } from "@/lib/finance/format";
+import { monthNameEs, monthShortLabelEs } from "@/lib/finance/month-names";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -74,7 +75,7 @@ export function WealthPage() {
       );
       const inv = Math.max(0, pat - liq);
       out.push({
-        label: `${String(m).padStart(2, "0")}`,
+        label: monthShortLabelEs(m),
         liquidez: liq,
         inversion: inv,
         patrimonio: pat,
@@ -180,7 +181,7 @@ export function WealthPage() {
                 const m = idx + 1;
                 return (
                   <tr key={row.label} className="border-t border-border/40">
-                    <td className="py-2 font-medium">{m}</td>
+                    <td className="py-2 font-medium capitalize">{monthNameEs(m)}</td>
                     <td className="py-2 text-right tabular-nums">
                       {formatEuroFromCents(row.liquidez)}
                     </td>
