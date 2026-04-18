@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FinanceAPP
 
-## Getting Started
+App de finanzas personales (Next.js). Datos locales con Dexie; opcionalmente **Supabase** si inicias sesión en Configuración → Cuenta.
 
-First, run the development server:
+Repositorio: [github.com/mariocamus22/financeapp](https://github.com/mariocamus22/financeapp).
+
+## Desarrollo
 
 ```bash
+npm install
+cp .env.example .env.local
+# Edita .env.local con URL y clave pública de Supabase (no subas .env.local al repo).
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. En el [panel de Supabase](https://supabase.com/dashboard), abre tu proyecto → **SQL Editor** y ejecuta el contenido de `supabase/migrations/20260207120000_finance_tables.sql` (tablas `finance_*`, RLS por `auth.uid()`).
+2. **Authentication → URL configuration**: añade en *Redirect URLs* tu dominio de Vercel (`https://tu-app.vercel.app/**`) y `http://localhost:3000/**` para desarrollo.
+3. Copia **Project URL** y la clave **anon** (o publishable si tu proyecto la usa) a `.env.local` / Vercel como `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-## Learn More
+Si alguna clave se compartió en un chat o issue, **rótala** en el panel de Supabase y actualiza Vercel.
 
-To learn more about Next.js, take a look at the following resources:
+## Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Importa el repo desde GitHub.
+2. Añade las mismas variables `NEXT_PUBLIC_*` en **Environment Variables** (Production y Preview).
+3. Redeploy tras cambiar variables.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Más detalles: [documentación de despliegue de Next.js en Vercel](https://nextjs.org/docs/app/building-your-application/deploying).
