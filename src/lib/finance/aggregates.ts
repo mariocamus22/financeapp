@@ -20,6 +20,67 @@ export function transactionsInPeriod(
   return txs.filter((t) => t.year === year && t.month === month);
 }
 
+export function transactionsInYear(txs: TransactionRow[], year: number): TransactionRow[] {
+  return txs.filter((t) => t.year === year);
+}
+
+/** Suma meses 1..lastMonth (inclusive) del año. */
+export function totalsForYearThroughMonth(
+  txs: TransactionRow[],
+  year: number,
+  lastMonth: number,
+): PeriodTotals {
+  let incomeCents = 0;
+  let expenseCents = 0;
+  let investmentCents = 0;
+  const cap = Math.min(12, Math.max(0, lastMonth));
+  for (let m = 1; m <= cap; m++) {
+    const t = totalsForPeriod(txs, year, m);
+    incomeCents += t.incomeCents;
+    expenseCents += t.expenseCents;
+    investmentCents += t.investmentCents;
+  }
+  return { incomeCents, expenseCents, investmentCents };
+}
+
+export function totalsForYear(txs: TransactionRow[], year: number): PeriodTotals {
+  return totalsForYearThroughMonth(txs, year, 12);
+}
+
+export function investmentFlowsByAssetInMonth(
+  txs: TransactionRow[],
+  year: number,
+  month: number,
+): Record<string, number> {
+  const slice = transactionsInPeriod(txs, year, month).filter((t) => t.type === "INVESTMENT");
+  const out: Record<string, number> = {};
+  for (const t of slice) {
+    out[t.categoryId] = (out[t.categoryId] ?? 0) + t.amountCents;
+  }
+  return out;
+}
+
+export function investmentFlowsByAssetInYear(
+  txs: TransactionRow[],
+  year: number,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (let m = 1; m <= 12; m++) {
+    const by = investmentFlowsByAssetInMonth(txs, year, m);
+    for (const [k, v] of Object.entries(by)) {
+      out[k] = (out[k] ?? 0) + v;
+    }
+  }
+  return out;
+}
+
+export function findSnapshotForMonth(
+  snapshots: MonthlySnapshotRow[],
+  ym: YearMonth,
+): MonthlySnapshotRow | undefined {
+  return snapshots.find((s) => s.year === ym.year && s.month === ym.month);
+}
+
 export function totalsForPeriod(
   txs: TransactionRow[],
   year: number,
@@ -169,6 +230,47 @@ function isOnOrBeforePeriod(t: TransactionRow, ym: YearMonth): boolean {
   if (t.year < ym.year) return true;
   if (t.year > ym.year) return false;
   return t.month <= ym.month;
+}
+
+export function transactionsUpTo(txs: TransactionRow[], ym: YearMonth): TransactionRow[] {
+  return txs.filter((t) => isOnOrBeforePeriod(t, ym));
+}
+
+/**
+ * Patrimonio y liquidez a cierre del mes: snapshot si existe; si no, liquidez + capital invertido acumulado.
+ */
+export function patrimonioBreakdownAtMonthEnd(args: {
+  txs: TransactionRow[];
+  platforms: PlatformRow[];
+  settings: SettingsRow;
+  snapshots: MonthlySnapshotRow[];
+  ym: YearMonth;
+}): {
+  patrimonioCents: number;
+  liquidityCents: number;
+  valueByAsset: Record<string, number>;
+  source: "snapshot" | "estimate";
+} {
+  const { txs, platforms, settings, snapshots, ym } = args;
+  const snap = findSnapshotForMonth(snapshots, ym);
+  if (snap) {
+    return {
+      patrimonioCents: snap.patrimonioTotalCents,
+      liquidityCents: snap.totalLiquidityCents,
+      valueByAsset: { ...snap.investmentValueByAsset },
+      source: "snapshot",
+    };
+  }
+  const txsUpTo = transactionsUpTo(txs, ym);
+  const liq = totalLiquidityCents(txsUpTo, platforms);
+  const capBy = investmentCapitalByAsset(txsUpTo, settings);
+  const inv = Object.values(capBy).reduce((a, b) => a + b, 0);
+  return {
+    patrimonioCents: liq + inv,
+    liquidityCents: liq,
+    valueByAsset: capBy,
+    source: "estimate",
+  };
 }
 
 /** Aproximación MVP: liquidez + capital invertido acumulado a cierre de mes. */

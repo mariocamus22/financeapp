@@ -7,7 +7,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy": "npx vercel deploy --prod --yes",
+    "deploy:preview": "npx vercel deploy --yes"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",

@@ -3,8 +3,10 @@ import type { PlatformRow, SettingsRow, TransactionRow } from "@/types/finance";
 import { IDS } from "@/db/ids";
 import {
   investmentCapitalByAsset,
+  investmentFlowsByAssetInMonth,
   liquidityBalancesByPlatform,
   totalsForPeriod,
+  totalsForYearThroughMonth,
   totalLiquidityCents,
 } from "./aggregates";
 
@@ -92,5 +94,65 @@ describe("totalLiquidityCents", () => {
   it("suma todas las plataformas de liquidez", () => {
     const txs: TransactionRow[] = [mk({ type: "INCOME", amountCents: 100_00 })];
     expect(totalLiquidityCents(txs, platforms)).toBe(100_00);
+  });
+});
+
+describe("totalsForYearThroughMonth", () => {
+  it("acumula varios meses del mismo año", () => {
+    const txs: TransactionRow[] = [
+      mk({
+        type: "INCOME",
+        amountCents: 100_00,
+        month: 1,
+        date: "2026-01-05",
+        categoryId: IDS.income.nomina,
+      }),
+      mk({
+        type: "EXPENSE",
+        amountCents: 40_00,
+        month: 2,
+        date: "2026-02-05",
+        categoryId: IDS.expense.alquiler,
+      }),
+      mk({
+        type: "INVESTMENT",
+        amountCents: 10_00,
+        month: 3,
+        date: "2026-03-05",
+        categoryId: IDS.asset.fondos,
+        platformId: IDS.platform.trInv,
+      }),
+    ];
+    const t2 = totalsForYearThroughMonth(txs, 2026, 2);
+    expect(t2.incomeCents).toBe(100_00);
+    expect(t2.expenseCents).toBe(40_00);
+    expect(t2.investmentCents).toBe(0);
+
+    const t3 = totalsForYearThroughMonth(txs, 2026, 3);
+    expect(t3.investmentCents).toBe(10_00);
+  });
+});
+
+describe("investmentFlowsByAssetInMonth", () => {
+  it("agrupa solo inversiones del mes", () => {
+    const txs: TransactionRow[] = [
+      mk({
+        type: "INVESTMENT",
+        amountCents: 100_00,
+        month: 4,
+        categoryId: IDS.asset.fondos,
+        platformId: IDS.platform.trInv,
+      }),
+      mk({
+        type: "INVESTMENT",
+        amountCents: 50_00,
+        month: 3,
+        date: "2026-03-10",
+        categoryId: IDS.asset.fondos,
+        platformId: IDS.platform.trInv,
+      }),
+    ];
+    const m = investmentFlowsByAssetInMonth(txs, 2026, 4);
+    expect(m[IDS.asset.fondos]).toBe(100_00);
   });
 });
